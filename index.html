@@ -496,7 +496,78 @@ document.getElementById('maintForm').addEventListener('submit', async e => {
   alert('Mantenimiento guardado en Supabase correctamente.');
 });
 
+// Lector de estados de cuenta PDF de Banco Pichincha
+const bankFile = document.getElementById('bankFile');
+const bankStatus = document.getElementById('bankStatus');
 
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+if (bankFile) {
+  bankFile.addEventListener('change', async function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      bankStatus.textContent = 'Selecciona un archivo PDF válido.';
+      return;
+    }
+
+    if (!window.pdfjsLib) {
+      bankStatus.textContent =
+        'No se pudo cargar el lector PDF. Recarga la página e inténtalo de nuevo.';
+      return;
+    }
+
+    bankStatus.textContent = 'Leyendo el PDF...';
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({
+        data: new Uint8Array(buffer)
+      }).promise;
+
+      let texto = '';
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const pagina = await pdf.getPage(i);
+        const contenido = await pagina.getTextContent();
+
+        texto += contenido.items
+          .map(item => item.str)
+          .join(' ') + '\n';
+      }
+
+      if (!texto.trim()) {
+        bankStatus.textContent =
+          'El PDF no contiene texto seleccionable. Necesitará reconocimiento OCR.';
+        return;
+      }
+
+      const vista = document.getElementById('bankPreview');
+      if (vista) vista.remove();
+
+      const preview = document.createElement('pre');
+      preview.id = 'bankPreview';
+      preview.style.cssText =
+        'white-space:pre-wrap;overflow-wrap:anywhere;' +
+        'max-height:300px;overflow:auto;padding:10px;' +
+        'background:#f3f4f6;border-radius:8px;font-size:12px;';
+      preview.textContent = texto.slice(0, 15000);
+
+      bankStatus.textContent =
+        'PDF leído correctamente. Revisa el texto extraído abajo.';
+      bankStatus.after(preview);
+
+    } catch (error) {
+      console.error('Error leyendo PDF:', error);
+      bankStatus.textContent =
+        'No se pudo leer el PDF. Comprueba que el archivo no esté protegido.';
+    }
+  });
+}
 </script>
 </body>
 </html>
