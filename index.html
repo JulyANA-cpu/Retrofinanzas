@@ -114,36 +114,44 @@ supabaseClient.auth.getSession().then(({ data, error }) => {
 
 const KEY='retrofinanzas_v1';let db=load();function load(){try{return JSON.parse(localStorage.getItem(KEY))||{expenses:[],jobs:[],maintenance:[]}}catch(e){return {expenses:[],jobs:[],maintenance:[]}}}function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}function money(n){return new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD'}).format(Number(n)||0)}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function go(id,btn){document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo({top:0,behavior:'smooth'});render()}function dateToday(){return new Date().toISOString().slice(0,10)}document.querySelectorAll('input[type=date]').forEach(x=>x.value=dateToday());
 
-async function cargarTrabajosSupabase() {
+supabaseClient.auth.onAuthStateChange((_event, session) => {   mostrarAcceso(session);
+  if (session) {
+    cargarGastosSupabase();
+    cargarTrabajosSupabase();
+    cargarMantenimientosSupabase();
+  }
+});
+ 
+
+async function cargarMantenimientosSupabase() {
   const { data: { user }, error: userError } =
     await supabaseClient.auth.getUser();
 
   if (userError || !user) return;
 
   const { data, error } = await supabaseClient
-    .from('jobs')
+    .from('maintenance')
     .select('*')
     .eq('user_id', user.id)
     .order('date', { ascending: false });
 
   if (error) {
-    console.error('Error al cargar trabajos:', error.message);
-    alert('No se pudieron cargar los trabajos: ' + error.message);
+    console.error('Error al cargar mantenimientos:', error.message);
+    alert('No se pudieron cargar los mantenimientos: ' + error.message);
     return;
   }
 
-  db.jobs = (data || []).map(x => ({
+  db.maintenance = (data || []).map(x => ({
     ...x,
-    start: Number(x.meter_start) || 0,
-    end: Number(x.meter_end) || 0,
-    units: Number(x.units) || 0,
-    rate: Number(x.rate) || 0,
-    income: Number(x.income) || 0
+    meter: Number(x.meter) || 0,
+    amount: Number(x.amount) || 0,
+    next: Number(x.next_meter) || 0
   }));
 
   render();
 }
 
+  
 document.getElementById('expenseForm').addEventListener('submit', async e => {
   e.preventDefault();
 
