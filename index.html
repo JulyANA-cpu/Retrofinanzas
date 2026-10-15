@@ -113,47 +113,6 @@ supabaseClient.auth.getSession().then(({ data, error }) => {
 });
 
 const KEY='retrofinanzas_v1';let db=load();function load(){try{return JSON.parse(localStorage.getItem(KEY))||{expenses:[],jobs:[],maintenance:[]}}catch(e){return {expenses:[],jobs:[],maintenance:[]}}}function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}function money(n){return new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD'}).format(Number(n)||0)}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function go(id,btn){document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo({top:0,behavior:'smooth'});render()}function dateToday(){return new Date().toISOString().slice(0,10)}document.querySelectorAll('input[type=date]').forEach(x=>x.value=dateToday());
-  
-async function cargarGastosSupabase() {
-  const { data: { user }, error: userError } =
-    await supabaseClient.auth.getUser();
-
-  if (userError || !user) return;
-
-  const { data, error } = await supabaseClient
-    .from('expenses')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('date', { ascending: false });
-
-  if (error) {
-    console.error('Error al cargar gastos:', error.message);
-    return;
-  }
-async function cargarGastosSupabase() {
-  const { data: { user }, error: userError } =
-    await supabaseClient.auth.getUser();
-
-  if (userError || !user) return;
-
-  const { data, error } = await supabaseClient
-    .from('expenses')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('date', { ascending: false });
-
-  if (error) {
-    console.error('Error al cargar gastos:', error.message);
-    return;
-  }
-
-  db.expenses = (data || []).map(x => ({
-    ...x,
-    amount: Number(x.amount) || 0
-  }));
-
-  render();
-}
 
 async function cargarTrabajosSupabase() {
   const { data: { user }, error: userError } =
@@ -183,9 +142,7 @@ async function cargarTrabajosSupabase() {
   }));
 
   render();
-
 }
-
 
 document.getElementById('expenseForm').addEventListener('submit', async e => {
   e.preventDefault();
