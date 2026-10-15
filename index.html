@@ -21,7 +21,6 @@
     </form>
   </div>
 </section>
-<section id="home" class="panel">
 <section id="home" class="panel active"><div class="sectionhead"><h2>Resumen</h2><select id="period" style="width:auto;padding:8px;font-size:12px" onchange="render()"><option value="month">Este mes</option><option value="all">Todo el registro</option></select></div><div class="grid"><div class="card"><div class="metric-label">Ingresos máquina</div><div class="metric green" id="income">$0.00</div></div><div class="card"><div class="metric-label">Costos máquina</div><div class="metric red" id="costs">$0.00</div></div><div class="card"><div class="metric-label">Resultado operativo</div><div class="metric" id="profit">$0.00</div></div><div class="card"><div class="metric-label">Gastos personales</div><div class="metric red" id="personal">$0.00</div></div><div class="card wide"><div class="sectionhead"><h2>Acciones rápidas</h2></div><div class="actions"><button class="btn" onclick="go('expenses')">＋ Registrar gasto</button><button class="btn secondary" onclick="go('jobs')">＋ Registrar trabajo</button></div></div><div class="card wide"><div class="sectionhead"><h2>Conexiones</h2><span class="sub">Pendientes de configurar</span></div><div class="connect"><div class="ico">✉️</div><div><strong>Hotmail personal</strong><div class="sub">Importación de XML/PDF requiere conexión segura</div></div></div><hr style="border:0;border-top:1px solid var(--line);margin:13px 0"><div class="connect"><div class="ico">🏦</div><div><strong>Banco Pichincha</strong><div class="sub">Preparado para importar movimientos CSV/Excel</div></div></div></div></div><div class="notice" style="margin-top:12px">Esta versión guarda los registros en el almacenamiento local de este navegador. Aún no sincroniza entre dispositivos, no está conectada a Hotmail ni al banco, y no sustituye una base de datos segura.</div></section>
 <section id="expenses" class="panel"><div class="sectionhead"><h2>Registrar gasto</h2><span class="sub">Gastos y comprobantes</span></div><div class="card"><form id="expenseForm"><label>Descripción *</label><input name="description" required placeholder="Ej. Diésel efectivo"><label>Importe USD *</label><input name="amount" required type="number" min="0.01" step="0.01" placeholder="80.00"><label>Fecha *</label><input name="date" type="date" required><label>Área *</label><select name="area"><option value="machine">Retroexcavadora</option><option value="personal">Personal</option></select><label>Categoría *</label><select name="category"><option>Combustible</option><option>Lubricantes</option><option>Filtros</option><option>Repuestos</option><option>Mantenimiento</option><option>Reparaciones</option><option>Operador</option><option>Transporte</option><option>Seguros</option><option>Financiamiento</option><option>Alimentación</option><option>Vivienda</option><option>Salud</option><option>Servicios</option><option>Deudas</option><option>Otros</option></select><label>Medio de pago *</label><select name="payment"><option>Efectivo</option><option>Banco Pichincha</option><option>Tarjeta</option><option>Transferencia</option><option>Pendiente de pago</option></select><label>Comprobante</label><select name="receipt"><option>Sin factura</option><option>Factura XML/PDF pendiente</option><option>Factura adjunta (demo)</option></select><label>Proveedor / nota (opcional)</label><input name="note" placeholder="Proveedor, galones, horómetro..."><button class="btn" type="submit">Guardar gasto en este dispositivo</button></form></div><div class="sectionhead" style="margin-top:20px"><h2>Gastos registrados</h2><button class="btn secondary" onclick="exportCSV('expenses')">Exportar CSV</button></div><div id="expenseList" class="list"></div></section>
 <section id="jobs" class="panel"><div class="sectionhead"><h2>Trabajos de la retroexcavadora</h2></div><div class="card"><form id="jobForm"><label>Cliente *</label><input name="client" required placeholder="Nombre del cliente"><label>Descripción / ubicación</label><input name="description" placeholder="Trabajo y sitio"><label>Modalidad *</label><select name="mode" id="mode" onchange="document.getElementById('hoursBox').classList.toggle('hidden',this.value!=='Hora')"><option>Hora</option><option>Jornada</option><option>Contrato</option></select><div id="hoursBox"><label>Horómetro inicial</label><input name="start" type="number" min="0" step="0.1" value="0"><label>Horómetro final</label><input name="end" type="number" min="0" step="0.1" value="0"></div><label>Tarifa USD (por hora, jornada o contrato) *</label><input name="rate" required type="number" min="0" step="0.01" placeholder="Ej. 35"><label>Estado</label><select name="status"><option>Ejecutado</option><option>Cotizado</option><option>Facturado</option><option>Cobrado parcial</option><option>Cobrado</option></select><label>Fecha *</label><input name="date" type="date" required><button class="btn" type="submit">Guardar trabajo</button></form></div><div class="sectionhead" style="margin-top:20px"><h2>Trabajos registrados</h2><button class="btn secondary" onclick="exportCSV('jobs')">Exportar CSV</button></div><div id="jobList" class="list"></div></section>
@@ -31,6 +30,81 @@
 <div class="footer-note">RetroFinanzas · Prototipo funcional local · No conectado a servicios externos</div></main><nav class="nav"><button class="active" data-page="home" onclick="go('home',this)"><span>⌂</span>Inicio</button><button data-page="jobs" onclick="go('jobs',this)"><span>🚜</span>Trabajos</button><button data-page="expenses" onclick="go('expenses',this)"><span>🧾</span>Gastos</button><button data-page="personalPanel" onclick="go('personalPanel',this)"><span>👤</span>Personal</button><button data-page="maintenance" onclick="go('maintenance',this)"><span>🔧</span>Mantto.</button><button data-page="reports" onclick="go('reports',this)"><span>▤</span>Reportes</button></nav></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const SUPABASE_URL = 'https://ycsezbbvvncgnoqraspp.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_X4st0o3WbPWnFdoJP6tN7Q_d05Zngsj';
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+function mostrarAcceso(session) {
+  document.querySelectorAll('.panel').forEach(panel => {
+    panel.classList.toggle(
+      'active',
+      session ? panel.id === 'home' : panel.id === 'loginPanel'
+    );
+  });
+
+  document.querySelector('.nav').style.display =
+    session ? 'flex' : 'none';
+
+  if (session) render();
+}
+
+document.getElementById('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+
+  const mensaje = document.getElementById('authMessage');
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+
+  mensaje.textContent = 'Comprobando acceso...';
+
+  const { error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  mensaje.textContent = error
+    ? 'No se pudo iniciar sesión: ' + error.message
+    : 'Acceso correcto.';
+});
+
+document.getElementById('signupButton').addEventListener('click', async () => {
+  const mensaje = document.getElementById('authMessage');
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+
+  if (!email || password.length < 6) {
+    mensaje.textContent = 'Escribe tu correo y una contraseña de al menos 6 caracteres.';
+    return;
+  }
+
+  mensaje.textContent = 'Creando cuenta...';
+
+  const { data, error } = await supabaseClient.auth.signUp({
+    email,
+    password
+  });
+
+  if (error) {
+    mensaje.textContent = 'No se pudo crear la cuenta: ' + error.message;
+  } else if (!data.session) {
+    mensaje.textContent = 'Cuenta creada. Revisa tu correo para confirmar el registro.';
+  } else {
+    mensaje.textContent = 'Cuenta creada correctamente.';
+  }
+});
+
+supabaseClient.auth.onAuthStateChange((_event, session) => {
+  mostrarAcceso(session);
+});
+
+supabaseClient.auth.getSession().then(({ data, error }) => {
+  if (!error) mostrarAcceso(data.session);
+});
+
 const KEY='retrofinanzas_v1';let db=load();function load(){try{return JSON.parse(localStorage.getItem(KEY))||{expenses:[],jobs:[],maintenance:[]}}catch(e){return {expenses:[],jobs:[],maintenance:[]}}}function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}function money(n){return new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD'}).format(Number(n)||0)}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function go(id,btn){document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo({top:0,behavior:'smooth'});render()}function dateToday(){return new Date().toISOString().slice(0,10)}document.querySelectorAll('input[type=date]').forEach(x=>x.value=dateToday());
 document.getElementById('expenseForm').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target);const item={id:Date.now(),description:f.get('description'),amount:Number(f.get('amount')),date:f.get('date'),area:f.get('area'),category:f.get('category'),payment:f.get('payment'),receipt:f.get('receipt'),note:f.get('note')};if(item.amount<=0)return alert('El importe debe ser mayor que cero.');db.expenses.unshift(item);save();e.target.reset();e.target.querySelector('[name=date]').value=dateToday();alert('Gasto guardado en este dispositivo.');});
 document.getElementById('jobForm').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target);let start=Number(f.get('start')||0),end=Number(f.get('end')||0);if(f.get('mode')==='Hora'&&end<start)return alert('El horómetro final no puede ser menor al inicial.');let units=f.get('mode')==='Hora'?end-start:1;db.jobs.unshift({id:Date.now(),client:f.get('client'),description:f.get('description'),mode:f.get('mode'),start,end,units,rate:Number(f.get('rate')),income:units*Number(f.get('rate')),status:f.get('status'),date:f.get('date')});save();e.target.reset();e.target.querySelector('[name=date]').value=dateToday();alert('Trabajo guardado en este dispositivo.');});
