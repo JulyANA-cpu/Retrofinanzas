@@ -129,14 +129,60 @@ async function cargarGastosSupabase() {
     console.error('Error al cargar gastos:', error.message);
     return;
   }
+async function cargarGastosSupabase() {
+  const { data: { user }, error: userError } =
+    await supabaseClient.auth.getUser();
+
+  if (userError || !user) return;
+
+  const { data, error } = await supabaseClient
+    .from('expenses')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('date', { ascending: false });
+
+  if (error) {
+    console.error('Error al cargar gastos:', error.message);
+    return;
+  }
 
   db.expenses = (data || []).map(x => ({
     ...x,
-    id: x.id,
     amount: Number(x.amount) || 0
   }));
 
   render();
+}
+
+async function cargarTrabajosSupabase() {
+  const { data: { user }, error: userError } =
+    await supabaseClient.auth.getUser();
+
+  if (userError || !user) return;
+
+  const { data, error } = await supabaseClient
+    .from('jobs')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('date', { ascending: false });
+
+  if (error) {
+    console.error('Error al cargar trabajos:', error.message);
+    alert('No se pudieron cargar los trabajos: ' + error.message);
+    return;
+  }
+
+  db.jobs = (data || []).map(x => ({
+    ...x,
+    start: Number(x.meter_start) || 0,
+    end: Number(x.meter_end) || 0,
+    units: Number(x.units) || 0,
+    rate: Number(x.rate) || 0,
+    income: Number(x.income) || 0
+  }));
+
+  render();
+
 }
 
 
