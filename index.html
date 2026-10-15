@@ -180,8 +180,72 @@ document.getElementById('expenseForm').addEventListener('submit', async e => {
   e.target.querySelector('[name=date]').value = dateToday();
 });
 
-document.getElementById('jobForm').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target);let start=Number(f.get('start')||0),end=Number(f.get('end')||0);if(f.get('mode')==='Hora'&&end<start)return alert('El horómetro final no puede ser menor al inicial.');let units=f.get('mode')==='Hora'?end-start:1;db.jobs.unshift({id:Date.now(),client:f.get('client'),description:f.get('description'),mode:f.get('mode'),start,end,units,rate:Number(f.get('rate')),income:units*Number(f.get('rate')),status:f.get('status'),date:f.get('date')});save();e.target.reset();e.target.querySelector('[name=date]').value=dateToday();alert('Trabajo guardado en este dispositivo.');});
-document.getElementById('maintForm').addEventListener('submit',e=>{e.preventDefault();let f=new FormData(e.target);db.maintenance.unshift({id:Date.now(),description:f.get('description'),meter:f.get('meter'),amount:Number(f.get('amount')||0),date:f.get('date'),next:f.get('next')});save();e.target.reset();e.target.querySelector('[name=date]').value=dateToday();alert('Mantenimiento guardado en este dispositivo.');});
+document.getElementById('jobForm').addEventListener('submit', async e => {
+  e.preventDefault();
+
+  const f = new FormData(e.target);
+  const start = Number(f.get('start') || 0);
+  const end = Number(f.get('end') || 0);
+  const mode = f.get('mode');
+
+  if (mode === 'Hora' && end < start) {
+    return alert('El horómetro final no puede ser menor al inicial.');
+  }
+
+  const units = mode === 'Hora' ? end - start : 1;
+  const rate = Number(f.get('rate') || 0);
+
+  if (rate <= 0) {
+    return alert('La tarifa debe ser mayor que cero.');
+  }
+
+  const { data: { user }, error: userError } =
+    await supabaseClient.auth.getUser();
+
+  if (userError || !user) {
+    return alert('Debes iniciar sesión para guardar el trabajo.');
+  }
+
+  const item = {
+    user_id: user.id,
+    client: f.get('client'),
+    description: f.get('description'),
+    mode: mode,
+    meter_start: start,
+    meter_end: end,
+    units: units,
+    rate: rate,
+    income: units * rate,
+    status: f.get('status'),
+    date: f.get('date')
+  };
+
+  const { data, error } = await supabaseClient
+    .from('jobs')
+    .insert(item)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error al guardar trabajo:', error);
+    return alert('No se pudo guardar el trabajo en Supabase: ' + error.message);
+  }
+
+  db.jobs.unshift({
+    ...data,
+    start: data.meter_start,
+    end: data.meter_end,
+    rate: Number(data.rate) || 0,
+    units: Number(data.units) || 0,
+    income: Number(data.income) || 0
+  });
+
+  render();
+  e.target.reset();
+  e.target.querySelector('[name=date]').value = dateToday();
+
+  alert('Trabajo guardado en Supabase correctamente.');
+});
 function itemHTML(title,meta,amt,extra=''){return `<div class="item"><div><strong>${esc(title)}</strong><small>${esc(meta)}</small>${extra}</div><div class="amount">${esc(amt)}</div></div>`}function render(){const month=new Date().toISOString().slice(0,7),all=document.getElementById('period')?.value==='all';let expenses=db.expenses.filter(x=>all||x.date?.startsWith(month)),jobs=db.jobs.filter(x=>all||x.date?.startsWith(month));let income=jobs.reduce((s,x)=>s+x.income,0),costs=expenses.filter(x=>x.area==='machine').reduce((s,x)=>s+x.amount,0),personal=expenses.filter(x=>x.area==='personal').reduce((s,x)=>s+x.amount,0);document.getElementById('income').textContent=money(income);document.getElementById('costs').textContent=money(costs);document.getElementById('profit').textContent=money(income-costs);document.getElementById('profit').className='metric '+(income-costs<0?'red':'green');document.getElementById('personal').textContent=money(personal);document.getElementById('expenseList').innerHTML=db.expenses.length?db.expenses.map(x=>itemHTML(x.description,`${x.date} · ${x.area==='machine'?'Retroexcavadora':'Personal'} · ${x.category} · ${x.payment}`,money(x.amount),`<span class="pill ${x.receipt==='Sin factura'?'':'ok'}">${esc(x.receipt)}</span> <button class="btn secondary" style="padding:5px 8px;margin-left:5px" onclick="removeItem('expenses',${x.id})">Eliminar</button>`)).join(''):'<div class="empty">Todavía no hay gastos registrados.</div>';document.getElementById('jobList').innerHTML=db.jobs.length?db.jobs.map(x=>itemHTML(x.client,`${x.date} · ${x.mode}${x.mode==='Hora'?` · ${x.units} h (${x.start}–${x.end})`:''} · ${x.status}`,money(x.income),`<button class="btn secondary" style="padding:5px 8px;margin-top:6px" onclick="removeItem('jobs',${x.id})">Eliminar</button>`)).join(''):'<div class="empty">Todavía no hay trabajos registrados.</div>';document.getElementById('personalList').innerHTML=db.expenses.filter(x=>x.area==='personal').map(x=>itemHTML(x.description,`${x.date} · ${x.category}`,money(x.amount))).join('')||'<div class="empty">No hay movimientos personales registrados.</div>';document.getElementById('maintList').innerHTML=db.maintenance.map(x=>itemHTML(x.description,`${x.date} · Horómetro ${x.meter||'—'} · Próximo ${x.next||'—'}`,money(x.amount),`<button class="btn secondary" style="padding:5px 8px;margin-top:6px" onclick="removeItem('maintenance',${x.id})">Eliminar</button>`)).join('')||'<div class="empty">Sin mantenimientos registrados.</div>'}function removeItem(type,id){if(confirm('¿Eliminar este registro?')){db[type]=db[type].filter(x=>x.id!==id);save()}}function exportCSV(type){const arr=db[type];if(!arr.length)return alert('No hay registros para exportar.');let keys=[...new Set(arr.flatMap(o=>Object.keys(o)))];let csv='\ufeff'+[keys.join(';'),...arr.map(o=>keys.map(k=>'"'+String(o[k]??'').replace(/"/g,'""')+'"').join(';'))].join('\r\n');download(csv,`${type}_retrofinanzas.csv`,'text/csv;charset=utf-8;')}function download(data,name,type){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;a.click();URL.revokeObjectURL(a.href)}function backup(){download(JSON.stringify(db,null,2),'respaldo_retrofinanzas.json','application/json')}document.getElementById('restoreFile').addEventListener('change',async e=>{try{let obj=JSON.parse(await e.target.files[0].text());if(!Array.isArray(obj.expenses)||!Array.isArray(obj.jobs)||!Array.isArray(obj.maintenance))throw Error();db=obj;save();document.getElementById('restoreStatus').textContent='Respaldo restaurado en este dispositivo.'}catch(err){document.getElementById('restoreStatus').textContent='Archivo no válido.'}});document.getElementById('bankFile').addEventListener('change',e=>document.getElementById('bankStatus').textContent=e.target.files[0]?`Archivo seleccionado: ${e.target.files[0].name}. La conciliación aún debe implementarse.`:'');render();
 </script>
 </body>
