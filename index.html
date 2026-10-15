@@ -497,9 +497,11 @@ document.getElementById('maintForm').addEventListener('submit', async e => {
   alert('Mantenimiento guardado en Supabase correctamente.');
 });
 
-// Lector de estados de cuenta PDF de Banco Pichincha
+
+ // Lector de estados de cuenta PDF de Banco Pichincha
 const bankFile = document.getElementById('bankFile');
 const bankStatus = document.getElementById('bankStatus');
+const bankReview = document.getElementById('bankReview');
 
 if (window.pdfjsLib) {
   pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -511,18 +513,19 @@ if (bankFile) {
     const file = this.files[0];
     if (!file) return;
 
-    if (file.type !== 'application/pdf') {
+    if (!/\.pdf$/i.test(file.name)) {
       bankStatus.textContent = 'Selecciona un archivo PDF válido.';
       return;
     }
 
     if (!window.pdfjsLib) {
       bankStatus.textContent =
-        'No se pudo cargar el lector PDF. Recarga la página e inténtalo de nuevo.';
+        'No se pudo cargar el lector PDF. Recarga la página.';
       return;
     }
 
-    bankStatus.textContent = 'Leyendo el PDF...';
+    bankStatus.textContent = 'Leyendo y organizando el PDF...';
+    bankReview.replaceChildren();
 
     try {
       const buffer = await file.arrayBuffer();
@@ -530,45 +533,84 @@ if (bankFile) {
         data: new Uint8Array(buffer)
       }).promise;
 
-      let texto = '';
+      const lineas = [];
 
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const pagina = await pdf.getPage(i);
+      for (let paginaNum = 1; paginaNum <= pdf.numPages; paginaNum++) {
+        const pagina = await pdf.getPage(paginaNum);
         const contenido = await pagina.getTextContent();
 
-        texto += contenido.items
-          .map(item => item.str)
-          .join(' ') + '\n';
+        const items = contenido.items
+          .filter(item => item.str && item.str.trim())
+          .map(item => ({
+            x: item.transform[4],
+            y: item.transform[5],
+            texto: item.str.trim()
+          }))
+          .sort((a, b) => b.y - a.y || a.x - b.x);
+
+        const filas = [];
+
+        for (const item of items) {
+          let fila = filas.find(f => Math.abs(f.y - item.y) <= 3);
+
+          if (!fila) {
+            fila = { y: item.y, items: [] };
+            filas.push(fila);
+          }
+
+          fila.items.push(item);
+        }
+
+        filas.sort((a, b) => b.y - a.y);
+
+        for (const fila of filas) {
+          fila.items.sort((a, b) => a.x - b.x);
+
+          const textoFila = fila.items
+            .map(item => item.texto)
+            .join(' | ');
+
+          if (textoFila.trim()) {
+            lineas.push(`Página ${paginaNum} | ${textoFila}`);
+          }
+        }
       }
 
-      if (!texto.trim()) {
+      if (lineas.length === 0) {
         bankStatus.textContent =
-          'El PDF no contiene texto seleccionable. Necesitará reconocimiento OCR.';
+          'No se encontró texto seleccionable en el PDF.';
         return;
       }
 
-      const vista = document.getElementById('bankPreview');
-      if (vista) vista.remove();
+      const titulo = document.createElement('h4');
+      titulo.textContent = 'Texto organizado para revisión';
+      bankReview.appendChild(titulo);
 
-      const preview = document.createElement('pre');
-      preview.id = 'bankPreview';
-      preview.style.cssText =
+      const aviso = document.createElement('p');
+      aviso.className = 'sub';
+      aviso.textContent =
+        'Revisa las fechas, descripciones y columnas. Todavía no se ha importado ningún movimiento.';
+      bankReview.appendChild(aviso);
+
+      const vista = document.createElement('pre');
+      vista.style.cssText =
         'white-space:pre-wrap;overflow-wrap:anywhere;' +
-        'max-height:300px;overflow:auto;padding:10px;' +
+        'max-height:450px;overflow:auto;padding:12px;' +
         'background:#f3f4f6;border-radius:8px;font-size:12px;';
-      preview.textContent = texto.slice(0, 15000);
+      vista.textContent = lineas.join('\n');
+      bankReview.appendChild(vista);
 
       bankStatus.textContent =
-        'PDF leído correctamente. Revisa el texto extraído abajo.';
-      bankStatus.after(preview);
+        `PDF leído: ${pdf.numPages} página(s). Se encontraron ${lineas.length} líneas.`;
 
     } catch (error) {
       console.error('Error leyendo PDF:', error);
       bankStatus.textContent =
-        'No se pudo leer el PDF. Comprueba que el archivo no esté protegido.';
+        'No se pudo leer el PDF. Comprueba que no esté protegido.';
     }
   });
 }
+
 </script>
 </body>
 </html>
