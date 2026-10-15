@@ -599,6 +599,80 @@ if (bankFile) {
         'background:#f3f4f6;border-radius:8px;font-size:12px;';
       vista.textContent = lineas.join('\n');
       bankReview.appendChild(vista);
+      
+      // Crear una tabla preliminar de movimientos bancarios
+      const tabla = document.createElement('table');
+      tabla.style.cssText =
+        'width:100%;border-collapse:collapse;margin-top:12px;font-size:12px;';
+
+      const encabezado = document.createElement('tr');
+
+      ['Fecha', 'Descripción', 'Débito', 'Crédito', 'Saldo'].forEach(texto => {
+        const th = document.createElement('th');
+        th.textContent = texto;
+        th.style.cssText =
+          'padding:8px;border-bottom:2px solid #ccc;text-align:left;';
+        encabezado.appendChild(th);
+      });
+
+      tabla.appendChild(encabezado);
+
+      let movimientosDetectados = 0;
+
+      for (const linea of lineas) {
+        const partes = linea.split('|').map(p => p.trim());
+
+        // Formato esperado:
+        // Página | fecha | oficina | documento | descripción | débito | crédito | saldo
+        if (partes.length < 8) continue;
+        if (!/^\d{1,2}-[a-záéíóúñ]{3}\.?$/i.test(partes[1])) continue;
+
+        const valores = partes.slice(-3);
+
+        // Aceptar únicamente importes con formato numérico
+        const esImporte = v =>
+          /^\d[\d.,]*$/.test(v) &&
+          /\d/.test(v);
+
+        if (!valores.every(esImporte)) continue;
+
+        const fila = document.createElement('tr');
+        const datos = [
+          partes[1],
+          partes.slice(4, -3).join(' | ') || '(sin descripción)',
+          valores[0],
+          valores[1],
+          valores[2]
+        ];
+
+        datos.forEach((dato, indice) => {
+          const td = document.createElement('td');
+          td.textContent = dato;
+          td.style.cssText =
+            'padding:8px;border-bottom:1px solid #ddd;';
+
+          if (indice >= 2) td.style.textAlign = 'right';
+
+          fila.appendChild(td);
+        });
+
+        tabla.appendChild(fila);
+        movimientosDetectados++;
+      }
+
+      const resumen = document.createElement('p');
+      resumen.className = 'sub';
+      resumen.textContent =
+        `Movimientos detectados para revisar: ${movimientosDetectados}. ` +
+        'Esta tabla es preliminar; aún no se importan datos.';
+
+      bankReview.appendChild(resumen);
+
+      const contenedorTabla = document.createElement('div');
+      contenedorTabla.style.overflowX = 'auto';
+      contenedorTabla.appendChild(tabla);
+      bankReview.appendChild(contenedorTabla);
+
 
       bankStatus.textContent =
         `PDF leído: ${pdf.numPages} página(s). Se encontraron ${lineas.length} líneas.`;
