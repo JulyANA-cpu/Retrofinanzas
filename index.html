@@ -103,6 +103,7 @@ supabaseClient.auth.onAuthStateChange((_event, session) => {
 
   if (session) {
     cargarGastosSupabase();
+    cargarTrabajosSupabase();
   }
 });
 
