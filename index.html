@@ -356,10 +356,31 @@ document.getElementById('expenseForm').addEventListener('submit', async e => {
     return alert('No se pudo guardar en Supabase: ' + error.message);
   }
 
+
+  const { data: savedItem, error: fetchError } = await supabaseClient
+    .from('expenses')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (fetchError) {
+    console.error('Error al actualizar la lista:', fetchError);
+    await cargarGastosSupabase();
+  } else if (savedItem) {
+    db.expenses.unshift({
+      ...savedItem,
+      amount: Number(savedItem.amount || 0)
+    });
+    render();
+  }
+
   alert('Gasto guardado en Supabase correctamente.');
   e.target.reset();
   e.target.querySelector('[name=date]').value = dateToday();
 });
+
 
 document.getElementById('jobForm').addEventListener('submit', async e => {
   e.preventDefault();
