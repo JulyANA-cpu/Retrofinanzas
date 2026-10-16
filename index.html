@@ -633,6 +633,7 @@ if (bankFile) {
       const pdf = await pdfjsLib.getDocument({
         data: new Uint8Array(buffer)
       }).promise;
+      const anioEstadoCuenta = 2026;
 
       const lineas = [];
 
