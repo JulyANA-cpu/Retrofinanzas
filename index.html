@@ -794,10 +794,15 @@ document.getElementById('expenseForm').addEventListener('submit', async e => {
   }
 
   
+ 
+  const { data, error } = await supabaseClient
     .from('expenses')
-    .insert({ ...item, user_id: user.id });
+    .insert({ ...item, user_id: user.id })
+    .select()
+    .single();
 
   if (error) {
+
     console.error(error);
     return alert('No se pudo guardar en Supabase: ' + error.message);
   }
