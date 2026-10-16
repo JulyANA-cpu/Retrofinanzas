@@ -695,8 +695,9 @@ const botonImportar = document.createElement('button');
 botonImportar.type = 'button';
 botonImportar.className = 'btn';
 botonImportar.textContent = 'Importar movimientos seleccionados';
-botonImportar.disabled = true;
-botonImportar.title = 'El botón se habilitará en el siguiente paso, al conectar la importación segura.';
+
+botonImportar.disabled = false;
+botonImportar.title = 'Guardar los movimientos bancarios seleccionados en Supabase.';
 bankReview.appendChild(botonImportar);
 
 const contenedorTabla = document.createElement('div');
