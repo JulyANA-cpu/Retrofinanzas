@@ -369,6 +369,7 @@ if (
     });
   }
 
+
   const { error } = await supabaseClient
     .from('bank_transactions')
     .upsert(registros, {
@@ -382,7 +383,48 @@ if (
     return;
   }
 
-  alert('Importación finalizada. Los movimientos seleccionados se procesaron.');
+  const fingerprints = registros.map(registro => registro.fingerprint);
+
+  const { data: transacciones, error: errorConsulta } =
+    await supabaseClient
+      .from('bank_transactions')
+      .select('id, fingerprint')
+      .eq('user_id', user.id)
+      .in('fingerprint', fingerprints);
+
+  if (errorConsulta || !transacciones) {
+    console.error('Error al consultar movimientos:', errorConsulta);
+    alert(
+      'Los movimientos se guardaron, pero no se pudieron vincular al PDF. ' +
+      'No vuelvas a importar el archivo todavía.'
+    );
+    return;
+  }
+
+  const vinculos = transacciones.map(transaccion => ({
+    statement_id: estadoCuenta.id,
+    transaction_id: transaccion.id,
+    user_id: user.id
+  }));
+
+  const { error: errorVinculos } = await supabaseClient
+    .from('bank_statement_transactions')
+    .upsert(vinculos, {
+      onConflict: 'statement_id,transaction_id',
+      ignoreDuplicates: true
+    });
+
+  if (errorVinculos) {
+    console.error('Error al vincular movimientos:', errorVinculos);
+    alert(
+      'Los movimientos se guardaron, pero no se pudieron vincular al PDF. ' +
+      'Conserva el registro para revisión.'
+    );
+    return;
+  }
+
+  alert('Estado de cuenta y movimientos importados correctamente.');
+
 }
 
 let movimientosBancarios = [];
@@ -725,7 +767,7 @@ document.getElementById('expenseForm').addEventListener('submit', async e => {
     return alert('Debes iniciar sesión para guardar el gasto.');
   }
 
-  const { error } = await supabaseClient
+  
     .from('expenses')
     .insert({ ...item, user_id: user.id });
 
