@@ -434,6 +434,11 @@ const clasificarAutomaticamente = movimiento => {
 };
 
 
+console.log(
+  'Prueba CONSUMO VISA NA:',
+  clasificarAutomaticamente({ description: 'CONSUMO VISA NA', debit: 10, credit: 0 })
+);
+
   const pendientesParaActualizar = movimientosBancarios.filter(
     movimiento =>
       (!movimiento.classification ||
