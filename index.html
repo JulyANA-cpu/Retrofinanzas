@@ -26,7 +26,7 @@
 <section id="jobs" class="panel"><div class="sectionhead"><h2>Trabajos de la retroexcavadora</h2></div><div class="card"><form id="jobForm"><label>Cliente *</label><input name="client" required placeholder="Nombre del cliente"><label>Descripción / ubicación</label><input name="description" placeholder="Trabajo y sitio"><label>Modalidad *</label><select name="mode" id="mode" onchange="document.getElementById('hoursBox').classList.toggle('hidden',this.value!=='Hora')"><option>Hora</option><option>Jornada</option><option>Contrato</option></select><div id="hoursBox"><label>Horómetro inicial</label><input name="start" type="number" min="0" step="0.1" value="0"><label>Horómetro final</label><input name="end" type="number" min="0" step="0.1" value="0"></div><label>Tarifa USD (por hora, jornada o contrato) *</label><input name="rate" required type="number" min="0" step="0.01" placeholder="Ej. 35"><label>Estado</label><select name="status"><option>Ejecutado</option><option>Cotizado</option><option>Facturado</option><option>Cobrado parcial</option><option>Cobrado</option></select><label>Fecha *</label><input name="date" type="date" required><button class="btn" type="submit">Guardar trabajo</button></form></div><div class="sectionhead" style="margin-top:20px"><h2>Trabajos registrados</h2><button class="btn secondary" onclick="exportCSV('jobs')">Exportar CSV</button></div><div id="jobList" class="list"></div></section>
 <section id="personalPanel" class="panel"><div class="sectionhead"><h2>Finanzas personales</h2></div><div class="card"><p class="sub">Registra gastos e ingresos personales en la sección Gastos usando el área Personal. Las transferencias a la operación deben tratarse como aportes o retiros, no como ingreso o gasto duplicado.</p><button class="btn" onclick="go('expenses')">＋ Registrar movimiento</button></div><div class="sectionhead" style="margin-top:20px"><h2>Movimientos personales</h2></div><div id="personalList" class="list"></div></section>
 <section id="maintenance" class="panel"><div class="sectionhead"><h2>Mantenimiento</h2></div><div class="card"><form id="maintForm"><label>Trabajo realizado *</label><input name="description" required placeholder="Cambio de aceite, filtros..."><label>Horómetro actual</label><input name="meter" type="number" min="0" step="0.1"><label>Costo USD</label><input name="amount" type="number" min="0" step="0.01"><label>Fecha *</label><input name="date" type="date" required><label>Próximo mantenimiento a horómetro</label><input name="next" type="number" min="0" step="0.1"><button class="btn" type="submit">Guardar mantenimiento</button></form></div><div class="sectionhead" style="margin-top:20px"><h2>Historial</h2><button class="btn secondary" onclick="exportCSV('maintenance')">Exportar CSV</button></div><div id="maintList" class="list"></div></section>
-<section id="reports" class="panel"><div class="sectionhead"><h2>Reportes y respaldo</h2></div><div class="card"><p>Descarga tus registros en CSV para abrirlos en Excel. Haz copias periódicas: los datos están solo en este navegador.</p><div class="actions"><button class="btn" onclick="exportCSV('expenses')">Exportar gastos</button><button class="btn secondary" onclick="exportCSV('jobs')">Exportar trabajos</button></div><button class="btn secondary" style="width:100%;margin-top:9px" onclick="exportCSV('maintenance')">Exportar mantenimiento</button><label style="margin-top:18px">Importar movimientos bancarios (CSV)</label><input type="file" id="bankFile" accept=".pdf,application/pdf,.csv,text/csv"><p class="sub">Esta versión no concilia automáticamente ni valida con el banco; la importación solo muestra el nombre del archivo seleccionado.</p><div id="bankStatus" class="sub"></div><label>Respaldo de datos (JSON)</label><button class="btn dark" style="width:100%" onclick="backup()">Descargar respaldo completo</button><label>Restaurar respaldo JSON</label><input type="file" id="restoreFile" accept="application/json"><div id="restoreStatus" class="sub"></div><div class="notice" style="margin-top:16px">Antes de conectar el correo, la versión de producción debe implementar inicio de sesión Microsoft, permisos mínimos, servidor y base de datos protegida. No introduzcas contraseñas aquí.</div></div></section>
+<section id="reports" class="panel"><div class="sectionhead"><h2>Reportes y respaldo</h2></div><div class="card"><p>Descarga tus registros en CSV para abrirlos en Excel. Haz copias periódicas: los datos están solo en este navegador.</p><div class="actions"><button class="btn" onclick="exportCSV('expenses')">Exportar gastos</button><button class="btn secondary" onclick="exportCSV('jobs')">Exportar trabajos</button></div><button class="btn secondary" style="width:100%;margin-top:9px" onclick="exportCSV('maintenance')">Exportar mantenimiento</button><label style="margin-top:18px">Importar movimientos bancarios (CSV)</label><input type="file" id="bankFile" accept=".pdf,application/pdf,.csv,text/csv"><p class="sub">Revisa los movimientos del PDF antes de importarlos. Los débitos y créditos se guardarán por separado y no se registrarán automáticamente como gastos o ingresos.</p><div id="bankStatus" class="sub"></div><label>Respaldo de datos (JSON)</label><button class="btn dark" style="width:100%" onclick="backup()">Descargar respaldo completo</button><label>Restaurar respaldo JSON</label><input type="file" id="restoreFile" accept="application/json"><div id="restoreStatus" class="sub"></div><div class="notice" style="margin-top:16px">Antes de conectar el correo, la versión de producción debe implementar inicio de sesión Microsoft, permisos mínimos, servidor y base de datos protegida. No introduzcas contraseñas aquí.</div></div></section>
 <div id="bankReview" style="margin-top:12px;overflow-x:auto"></div>
   <div class="footer-note">RetroFinanzas · Prototipo funcional local · No conectado a servicios externos</div></main><nav class="nav"><button class="active" data-page="home" onclick="go('home',this)"><span>⌂</span>Inicio</button><button data-page="jobs" onclick="go('jobs',this)"><span>🚜</span>Trabajos</button><button data-page="expenses" onclick="go('expenses',this)"><span>🧾</span>Gastos</button><button data-page="personalPanel" onclick="go('personalPanel',this)"><span>👤</span>Personal</button><button data-page="maintenance" onclick="go('maintenance',this)"><span>🔧</span>Mantto.</button><button data-page="reports" onclick="go('reports',this)"><span>▤</span>Reportes</button></nav></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -617,66 +617,93 @@ if (bankFile) {
 
       tabla.appendChild(encabezado);
 
-      let movimientosDetectados = 0;
+  
+let movimientosDetectados = 0;
+const movimientosSeleccionables = [];
 
-      for (const linea of lineas) {
-        const partes = linea.split('|').map(p => p.trim());
+for (const linea of lineas) {
+  const partes = linea.split('|').map(p => p.trim());
 
-        // Formato esperado:
-        // Página | fecha | oficina | documento | descripción | débito | crédito | saldo
-        if (partes.length < 8) continue;
-   if (partes.length < 8) continue;
+  if (partes.length < 8) continue;
 
-const indiceFecha = partes.findIndex(p =>
-  /^\d{1,2}-(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\.?(-?\d{4})?$/i.test(p)
-);
+  const indiceFecha = partes.findIndex(p =>
+    /^\d{1,2}-(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\.?(-?\d{4})?$/i.test(p)
+  );
 
-if (indiceFecha < 0) continue;
+  if (indiceFecha < 0) continue;
 
-const valores = partes.slice(-3);
+  const valores = partes.slice(-3);
 
-const esImporte = v =>
-  /^\d[\d.,]*$/.test(v) &&
-  /\d/.test(v);
+  const esImporte = v =>
+    /^\d[\d.,]*$/.test(v) && /\d/.test(v);
 
-if (!valores.every(esImporte)) continue;
+  if (!valores.every(esImporte)) continue;
 
-        const fila = document.createElement('tr');
-    const datos = [
-  partes[indiceFecha],
-  partes.slice(indiceFecha + 3, -3).join(' | ') || '(sin descripción)',
-  valores[0],
-  valores[1],
-  valores[2]
-];
+  const movimiento = {
+    fecha: partes[indiceFecha],
+    descripcion: partes.slice(indiceFecha + 3, -3).join(' | ') || '(sin descripción)',
+    debito: valores[0],
+    credito: valores[1],
+    saldo: valores[2]
+  };
 
-        datos.forEach((dato, indice) => {
-          const td = document.createElement('td');
-          td.textContent = dato;
-          td.style.cssText =
-            'padding:8px;border-bottom:1px solid #ddd;';
+  movimientosSeleccionables.push(movimiento);
 
-          if (indice >= 2) td.style.textAlign = 'right';
+  const fila = document.createElement('tr');
+  const celdaSeleccion = document.createElement('td');
+  const casilla = document.createElement('input');
 
-          fila.appendChild(td);
-        });
+  casilla.type = 'checkbox';
+  casilla.checked = true;
+  casilla.className = 'bank-movement-check';
+  celdaSeleccion.appendChild(casilla);
+  fila.appendChild(celdaSeleccion);
 
-        tabla.appendChild(fila);
-        movimientosDetectados++;
-      }
+  [
+    movimiento.fecha,
+    movimiento.descripcion,
+    movimiento.debito,
+    movimiento.credito,
+    movimiento.saldo
+  ].forEach((dato, indice) => {
+    const td = document.createElement('td');
+    td.textContent = dato;
+    td.style.cssText = 'padding:8px;border-bottom:1px solid #ddd;';
+    if (indice >= 2) td.style.textAlign = 'right';
+    fila.appendChild(td);
+  });
 
-      const resumen = document.createElement('p');
-      resumen.className = 'sub';
-      resumen.textContent =
-        `Movimientos detectados para revisar: ${movimientosDetectados}. ` +
-        'Esta tabla es preliminar; aún no se importan datos.';
+  tabla.appendChild(fila);
+  movimientosDetectados++;
+}
 
-      bankReview.appendChild(resumen);
+const encabezado = tabla.querySelector('thead tr');
+if (encabezado) {
+  const th = document.createElement('th');
+  th.textContent = 'Seleccionar';
+  encabezado.insertBefore(th, encabezado.firstChild);
+}
 
-      const contenedorTabla = document.createElement('div');
-      contenedorTabla.style.overflowX = 'auto';
-      contenedorTabla.appendChild(tabla);
-      bankReview.appendChild(contenedorTabla);
+const resumen = document.createElement('p');
+resumen.className = 'sub';
+resumen.textContent =
+  `Movimientos detectados para revisar: ${movimientosDetectados}. Marca los que deseas importar.`;
+
+bankReview.appendChild(resumen);
+
+const botonImportar = document.createElement('button');
+botonImportar.type = 'button';
+botonImportar.className = 'btn';
+botonImportar.textContent = 'Importar movimientos seleccionados';
+botonImportar.disabled = true;
+botonImportar.title = 'El botón se habilitará en el siguiente paso, al conectar la importación segura.';
+bankReview.appendChild(botonImportar);
+
+const contenedorTabla = document.createElement('div');
+contenedorTabla.style.overflowX = 'auto';
+contenedorTabla.appendChild(tabla);
+bankReview.appendChild(contenedorTabla);
+
 
 
       bankStatus.textContent =
