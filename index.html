@@ -238,6 +238,19 @@ async function guardarMovimientosBancarios(movimientos, casillas, anioEstadoCuen
     if (!mes) return null;
 
 if (!anioNumerico || anioNumerico < 2000) return null;
+    const fechaValidar = new Date(
+  Number(anio),
+  Number(mes) - 1,
+  Number(dia)
+);
+
+if (
+  fechaValidar.getFullYear() !== Number(anio) ||
+  fechaValidar.getMonth() !== Number(mes) - 1 ||
+  fechaValidar.getDate() !== Number(dia)
+) {
+  return null;
+}
 
     return `${anio}-${mes}-${dia}`;
   };
