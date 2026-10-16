@@ -256,7 +256,7 @@ const personal = expenses
 }
 
 
-async function guardarMovimientosBancarios(movimientos, casillas, anioEstadoCuenta) {
+async function guardarMovimientosBancarios(movimientos, casillas, anioEstadoCuenta, nombreArchivo) {
   const { data: { user }, error: userError } =
     await supabaseClient.auth.getUser();
 
