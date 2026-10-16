@@ -326,25 +326,86 @@ if (
   alert('Importación finalizada. Los movimientos seleccionados se procesaron.');
 }
 
+
 async function cargarMovimientosBancarios() {
+  const lista = document.getElementById('bankTransactionsList');
+  if (!lista) return;
+
+  lista.textContent = 'Cargando movimientos bancarios...';
+
   const { data: { user }, error: userError } =
     await supabaseClient.auth.getUser();
 
-  if (userError || !user) return;
+  if (userError || !user) {
+    lista.textContent = 'Inicia sesión para consultar tus movimientos.';
+    return;
+  }
 
   const { data, error } = await supabaseClient
     .from('bank_transactions')
-    .select('*')
+    .select('transaction_date, description, debit, credit, balance')
     .eq('user_id', user.id)
     .order('transaction_date', { ascending: false });
 
   if (error) {
     console.error('Error al cargar movimientos bancarios:', error);
+    lista.textContent = 'No se pudieron cargar los movimientos.';
     return;
   }
 
-  console.log('Movimientos bancarios cargados:', data);
+  if (!data || data.length === 0) {
+    lista.textContent = 'Todavía no hay movimientos bancarios.';
+    return;
+  }
+
+  const tabla = document.createElement('table');
+  tabla.style.cssText = 'width:100%;border-collapse:collapse;font-size:13px;';
+
+  const encabezado = document.createElement('tr');
+
+  ['Fecha', 'Descripción', 'Débito', 'Crédito', 'Saldo'].forEach(titulo => {
+    const th = document.createElement('th');
+    th.textContent = titulo;
+    th.style.cssText = 'padding:8px;border-bottom:2px solid #ccc;text-align:left;';
+    encabezado.appendChild(th);
+  });
+
+  tabla.appendChild(encabezado);
+
+  data.forEach(movimiento => {
+    const fila = document.createElement('tr');
+
+    [
+      movimiento.transaction_date,
+      movimiento.description,
+      Number(movimiento.debit || 0).toFixed(2),
+      Number(movimiento.credit || 0).toFixed(2),
+      movimiento.balance == null ? '' : Number(movimiento.balance).toFixed(2)
+    ].forEach((valor, indice) => {
+      const td = document.createElement('td');
+      td.textContent = valor;
+      td.style.cssText = 'padding:8px;border-bottom:1px solid #ddd;';
+      if (indice >= 2) td.style.textAlign = 'right';
+      fila.appendChild(td);
+    });
+
+    tabla.appendChild(fila);
+  });
+
+  lista.replaceChildren();
+
+  const resumen = document.createElement('p');
+  resumen.className = 'sub';
+  resumen.textContent = 'Movimientos encontrados: ' + data.length;
+
+  const contenedor = document.createElement('div');
+  contenedor.style.overflowX = 'auto';
+  contenedor.appendChild(tabla);
+
+  lista.appendChild(resumen);
+  lista.appendChild(contenedor);
 }
+
 
   
 async function cargarGastosSupabase() {
