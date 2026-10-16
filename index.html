@@ -311,7 +311,7 @@ if (
 
   alert('Importación finalizada. Los movimientos seleccionados se procesaron.');
 }
-```javascript
+
 async function cargarMovimientosBancarios() {
   const { data: { user }, error: userError } =
     await supabaseClient.auth.getUser();
