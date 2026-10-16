@@ -418,12 +418,13 @@ const clasificarAutomaticamente = movimiento => {
 };
 
 
-  const pendientesParaActualizar = movimientosBancarios.filter(
+  
+const pendientesParaActualizar = movimientosBancarios.filter(
     movimiento =>
-      (!movimiento.classification ||
-       movimiento.classification === 'pendiente') &&
-      clasificarAutomaticamente(movimiento) !== 'pendiente'
+      clasificarAutomaticamente(movimiento) !== 'pendiente' &&
+      movimiento.classification !== clasificarAutomaticamente(movimiento)
   );
+
 
   for (const movimiento of pendientesParaActualizar) {
     const clasificacion = clasificarAutomaticamente(movimiento);
