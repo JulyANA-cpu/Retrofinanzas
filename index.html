@@ -196,6 +196,107 @@ function render() {
 }
 
 
+async function guardarMovimientosBancarios(movimientos, casillas) {
+  const { data: { user }, error: userError } =
+    await supabaseClient.auth.getUser();
+
+  if (userError || !user) {
+    alert('Debes iniciar sesión para importar movimientos.');
+    return;
+  }
+
+  const seleccionados = movimientos.filter((movimiento, indice) =>
+    casillas[indice]?.checked
+  );
+
+  if (seleccionados.length === 0) {
+    alert('Selecciona al menos un movimiento.');
+    return;
+  }
+
+  const convertirImporte = valor =>
+    Number(String(valor).replace(/,/g, ''));
+
+  const normalizarFecha = fecha => {
+    const meses = {
+      ene: '01', feb: '02', mar: '03', abr: '04',
+      may: '05', jun: '06', jul: '07', ago: '08',
+      sep: '09', oct: '10', nov: '11', dic: '12'
+    };
+
+    const coincidencia = fecha.match(
+      /^(\d{1,2})-([a-z]{3})\.?(?:-?(\d{4}))?$/i
+    );
+
+    if (!coincidencia) return null;
+
+    const dia = coincidencia[1].padStart(2, '0');
+    const mes = meses[coincidencia[2].toLowerCase()];
+    const anio = coincidencia[3] || '';
+
+    if (!mes) return null;
+
+    if (!anio) return null;
+
+    return `${anio}-${mes}-${dia}`;
+  };
+
+  const registros = [];
+
+  for (const movimiento of seleccionados) {
+    const fecha = normalizarFecha(movimiento.fecha);
+    const debito = convertirImporte(movimiento.debito);
+    const credito = convertirImporte(movimiento.credito);
+    const saldo = convertirImporte(movimiento.saldo);
+
+    if (
+      !fecha ||
+      !Number.isFinite(debito) ||
+      !Number.isFinite(credito) ||
+      !Number.isFinite(saldo)
+    ) {
+      alert(
+        'Hay fechas o importes que requieren revisión. ' +
+        'No se guardó ningún movimiento.'
+      );
+      return;
+    }
+
+    const fingerprint = [
+      fecha,
+      movimiento.descripcion.trim(),
+      debito.toFixed(2),
+      credito.toFixed(2),
+      saldo.toFixed(2)
+    ].join('|');
+
+    registros.push({
+      user_id: user.id,
+      transaction_date: fecha,
+      description: movimiento.descripcion.trim(),
+      debit: debito,
+      credit: credito,
+      balance: saldo,
+      fingerprint
+    });
+  }
+
+  const { error } = await supabaseClient
+    .from('bank_transactions')
+    .upsert(registros, {
+      onConflict: 'user_id,fingerprint',
+      ignoreDuplicates: true
+    });
+
+  if (error) {
+    console.error('Error al importar movimientos:', error);
+    alert('Error al guardar: ' + error.message);
+    return;
+  }
+
+  alert('Importación finalizada. Los movimientos seleccionados se procesaron.');
+}
+
 async function cargarGastosSupabase() {
   const { data: { user }, error: userError } =
     await supabaseClient.auth.getUser();
