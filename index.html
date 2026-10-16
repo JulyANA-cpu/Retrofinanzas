@@ -646,6 +646,76 @@ render();
 }
 
 
+async function cargarEstadosDeCuenta() {
+  const lista = document.getElementById('bankStatementsList');
+  if (!lista) return;
+
+  lista.textContent = 'Cargando estados de cuenta...';
+
+  const { data: { user }, error: errorUsuario } =
+    await supabaseClient.auth.getUser();
+
+  if (errorUsuario || !user) {
+    lista.textContent = 'Inicia sesión para consultar tus estados de cuenta.';
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from('bank_statements')
+    .select('id, file_name, imported_at')
+    .eq('user_id', user.id)
+    .order('imported_at', { ascending: false });
+
+  if (error) {
+    console.error('Error al cargar estados de cuenta:', error);
+    lista.textContent = 'No se pudieron cargar los estados de cuenta.';
+    return;
+  }
+
+  lista.replaceChildren();
+
+  if (!data || data.length === 0) {
+    lista.textContent = 'No hay estados de cuenta registrados.';
+    return;
+  }
+
+  data.forEach(estado => {
+    const fila = document.createElement('div');
+    fila.style.cssText =
+      'display:flex;justify-content:space-between;align-items:center;' +
+      'gap:12px;padding:12px 0;border-bottom:1px solid #ddd;';
+
+    const informacion = document.createElement('div');
+
+    const nombre = document.createElement('strong');
+    nombre.textContent = estado.file_name || 'Estado de cuenta sin nombre';
+
+    const fecha = document.createElement('p');
+    fecha.className = 'sub';
+    fecha.textContent = estado.imported_at
+      ? new Date(estado.imported_at).toLocaleString()
+      : 'Fecha no disponible';
+
+    informacion.appendChild(nombre);
+    informacion.appendChild(fecha);
+
+    const boton = document.createElement('button');
+    boton.type = 'button';
+    boton.textContent = 'Eliminar';
+    boton.style.cssText =
+      'background:#b42318;color:white;border:0;padding:8px 12px;' +
+      'border-radius:6px;cursor:pointer;';
+
+    boton.addEventListener('click', () => {
+      eliminarEstadoDeCuenta(estado.id, estado.file_name);
+    });
+
+    fila.appendChild(informacion);
+    fila.appendChild(boton);
+    lista.appendChild(fila);
+  });
+}
+
   
 async function cargarGastosSupabase() {
   const { data: { user }, error: userError } =
