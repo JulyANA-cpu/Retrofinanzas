@@ -232,11 +232,12 @@ async function guardarMovimientosBancarios(movimientos, casillas) {
 
     const dia = coincidencia[1].padStart(2, '0');
     const mes = meses[coincidencia[2].toLowerCase()];
-    const anio = coincidencia[3] || '';
+   const anio = coincidencia[3] || String(anioEstadoCuenta);
+  const anioNumerico = Number(anio);
 
     if (!mes) return null;
 
-    if (!anio) return null;
+if (!anioNumerico || anioNumerico < 2000) return null;
 
     return `${anio}-${mes}-${dia}`;
   };
