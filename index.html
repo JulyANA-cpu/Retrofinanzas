@@ -382,6 +382,65 @@ async function cargarMovimientosBancarios() {
     return;
   }
 movimientosBancarios = data || [];
+  
+  const clasificarAutomaticamente = movimiento => {
+    const descripcion = (movimiento.description || '')
+      .toUpperCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const debito = Number(movimiento.debit || 0);
+    const credito = Number(movimiento.credit || 0);
+
+    
+if (debito > 0 && credito > 0) return 'pendiente';
+
+if (credito > 0) {
+  return 'ingreso_real';
+}
+
+
+    if (
+      /CONSUMO VISA|COMISION PAGO TARJETA|IVA COBRADO/.test(descripcion)
+    ) {
+      return debito > 0 ? 'gasto_personal' : 'pendiente';
+    }
+
+    if (
+      /TRANSFERENCIA|PAGO TARJETA INTERBANCARIA|PAG CLR REC TRF|RET CNB|IVA RETCNB|CM RET CNB/.test(descripcion)
+    ) {
+      return 'pendiente';
+    }
+
+    return 'pendiente';
+  };
+
+  const pendientesParaActualizar = movimientosBancarios.filter(
+    movimiento =>
+      (!movimiento.classification ||
+       movimiento.classification === 'pendiente') &&
+      clasificarAutomaticamente(movimiento) !== 'pendiente'
+  );
+
+  for (const movimiento of pendientesParaActualizar) {
+    const clasificacion = clasificarAutomaticamente(movimiento);
+
+    const { error: errorActualizacion } = await supabaseClient
+      .from('bank_transactions')
+      .update({ classification: clasificacion })
+      .eq('user_id', user.id)
+      .eq('fingerprint', movimiento.fingerprint);
+
+    if (!errorActualizacion) {
+      movimiento.classification = clasificacion;
+    } else {
+      console.error(
+        'No se pudo clasificar automáticamente:',
+        errorActualizacion
+      );
+    }
+  }
+
   if (!data || data.length === 0) {
     lista.textContent = 'Todavía no hay movimientos bancarios.';
     return;
