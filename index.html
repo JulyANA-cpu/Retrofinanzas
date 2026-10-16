@@ -719,6 +719,102 @@ async function cargarEstadosDeCuenta() {
 }
 
   
+
+
+async function eliminarEstadoDeCuenta(estadoId, nombreArchivo) {
+  const confirmar = confirm(
+    '¿Deseas eliminar el estado de cuenta "' + nombreArchivo + '"?\n\n' +
+    'Se eliminarán sus vínculos con los movimientos. ' +
+    'Solo se borrarán los movimientos que no pertenezcan a otro estado de cuenta.\n\n' +
+    'Esta acción no se puede deshacer.'
+  );
+
+  if (!confirmar) return;
+
+  const { data: { user }, error: errorUsuario } =
+    await supabaseClient.auth.getUser();
+
+  if (errorUsuario || !user) {
+    alert('Debes iniciar sesión para eliminar un estado de cuenta.');
+    return;
+  }
+
+  try {
+    // 1. Consultar los movimientos vinculados a este estado de cuenta.
+    const { data: vinculos, error: errorVinculos } =
+      await supabaseClient
+        .from('bank_statement_transactions')
+        .select('transaction_id')
+        .eq('statement_id', estadoId)
+        .eq('user_id', user.id);
+
+    if (errorVinculos) throw errorVinculos;
+
+    const idsMovimientos = [
+      ...new Set((vinculos || []).map(v => v.transaction_id))
+    ];
+
+    // 2. Eliminar los vínculos de este estado de cuenta.
+    const { error: errorDesvincular } = await supabaseClient
+      .from('bank_statement_transactions')
+      .delete()
+      .eq('statement_id', estadoId)
+      .eq('user_id', user.id);
+
+    if (errorDesvincular) throw errorDesvincular;
+
+    // 3. Borrar solo los movimientos que ya no tengan otros vínculos.
+    for (const movimientoId of idsMovimientos) {
+      const { data: otrosVinculos, error: errorConsultar } =
+        await supabaseClient
+          .from('bank_statement_transactions')
+          .select('transaction_id')
+          .eq('transaction_id', movimientoId)
+          .limit(1);
+
+      if (errorConsultar) {
+        throw errorConsultar;
+      }
+
+      if (!otrosVinculos || otrosVinculos.length === 0) {
+        const { error: errorBorrarMovimiento } = await supabaseClient
+          .from('bank_transactions')
+          .delete()
+          .eq('id', movimientoId)
+          .eq('user_id', user.id);
+
+        if (errorBorrarMovimiento) {
+          throw errorBorrarMovimiento;
+        }
+      }
+    }
+
+    // 4. Eliminar el registro del estado de cuenta.
+    const { error: errorEstado } = await supabaseClient
+      .from('bank_statements')
+      .delete()
+      .eq('id', estadoId)
+      .eq('user_id', user.id);
+
+    if (errorEstado) throw errorEstado;
+
+    alert('Estado de cuenta eliminado correctamente.');
+
+    // 5. Actualizar ambas listas.
+    await cargarEstadosDeCuenta();
+    await cargarMovimientosBancarios();
+
+  } catch (error) {
+    console.error('Error al eliminar estado de cuenta:', error);
+    alert(
+      'No se pudo completar la eliminación. Revisa la consola y ' +
+      'los datos en Supabase antes de volver a intentarlo.'
+    );
+  }
+}
+
+
+  
 async function cargarGastosSupabase() {
   const { data: { user }, error: userError } =
     await supabaseClient.auth.getUser();
