@@ -399,37 +399,40 @@ async function cargarMovimientosBancarios() {
   }
 movimientosBancarios = data || [];
   
-  const clasificarAutomaticamente = movimiento => {
-    const descripcion = (movimiento.description || '')
-      .toUpperCase()
-      .replace(/\s+/g, ' ')
-      .trim();
 
-    const debito = Number(movimiento.debit || 0);
-    const credito = Number(movimiento.credit || 0);
+const clasificarAutomaticamente = movimiento => {
+  const descripcion = (movimiento.description || '')
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+    .trim();
 
-    
-if (debito > 0 && credito > 0) return 'pendiente';
+  const debito = Number(movimiento.debit || 0);
+  const credito = Number(movimiento.credit || 0);
 
-if (credito > 0) {
-  return 'ingreso_real';
-}
+  if (debito > 0 && credito > 0) return 'pendiente';
 
-
-    if (
-      /CONSUMO VISA|COMISION PAGO TARJETA|IVA COBRADO/.test(descripcion)
-    ) {
-      return debito > 0 ? 'gasto_personal' : 'pendiente';
+  // Los créditos requieren revisión para no confundir
+  // transferencias o préstamos con ingresos reales.
+  if (credito > 0) {
+    if (/TRANSFERENCIA INTERNET|TRANSFERENCIA INTERBANCARIA/.test(descripcion)) {
+      return 'transferencia_propia';
     }
-
-    if (
-      /TRANSFERENCIA|PAGO TARJETA INTERBANCARIA|PAG CLR REC TRF|RET CNB|IVA RETCNB|CM RET CNB/.test(descripcion)
-    ) {
-      return 'pendiente';
-    }
-
     return 'pendiente';
-  };
+  }
+
+  // Comisiones y consumos con tarjeta: gastos.
+  if (/CONSUMO VISA|CONSUMO TD|COMISION PAGO TARJETA INTERBANCARIA|CNSM GAS|RETIRO ATM BP/.test(descripcion)) {
+    return debito > 0 ? 'gasto_personal' : 'pendiente';
+  }
+
+  // Transferencias y pagos de tarjeta: revisar antes de clasificar.
+  if (/TRANSFERENCIA INTERNET|TRANSFERENCIA INTERBANCARIA|PAGO TARJETA|17083377-VISA BP/.test(descripcion)) {
+    return 'pendiente';
+  }
+
+  return 'pendiente';
+};
+
 
   const pendientesParaActualizar = movimientosBancarios.filter(
     movimiento =>
