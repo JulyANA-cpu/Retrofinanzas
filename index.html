@@ -273,7 +273,21 @@ async function guardarMovimientosBancarios(movimientos, casillas, anioEstadoCuen
     alert('Selecciona al menos un movimiento.');
     return;
   }
+  const { data: estadoCuenta, error: errorEstado } =
+    await supabaseClient
+      .from('bank_statements')
+      .insert({
+        user_id: user.id,
+        file_name: nombreArchivo
+      })
+      .select('id')
+      .single();
 
+  if (errorEstado || !estadoCuenta) {
+    console.error('Error al registrar el estado de cuenta:', errorEstado);
+    alert('No se pudo registrar el estado de cuenta. No se importaron movimientos.');
+    return;
+  }
   const convertirImporte = valor =>
     Number(String(valor).replace(/,/g, ''));
 
