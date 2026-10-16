@@ -625,25 +625,30 @@ if (bankFile) {
         // Formato esperado:
         // Página | fecha | oficina | documento | descripción | débito | crédito | saldo
         if (partes.length < 8) continue;
-    if (!/^\d{1,2}-[a-záéíóúñ]{3}\.?(-?\d{4})?$/i.test(partes[1])) continue;
+   if (partes.length < 8) continue;
 
-        const valores = partes.slice(-3);
+const indiceFecha = partes.findIndex(p =>
+  /^\d{1,2}-(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\.?(-?\d{4})?$/i.test(p)
+);
 
-        // Aceptar únicamente importes con formato numérico
-        const esImporte = v =>
-          /^\d[\d.,]*$/.test(v) &&
-          /\d/.test(v);
+if (indiceFecha < 0) continue;
 
-        if (!valores.every(esImporte)) continue;
+const valores = partes.slice(-3);
+
+const esImporte = v =>
+  /^\d[\d.,]*$/.test(v) &&
+  /\d/.test(v);
+
+if (!valores.every(esImporte)) continue;
 
         const fila = document.createElement('tr');
-        const datos = [
-          partes[1],
-          partes.slice(4, -3).join(' | ') || '(sin descripción)',
-          valores[0],
-          valores[1],
-          valores[2]
-        ];
+    const datos = [
+  partes[indiceFecha],
+  partes.slice(indiceFecha + 3, -3).join(' | ') || '(sin descripción)',
+  valores[0],
+  valores[1],
+  valores[2]
+];
 
         datos.forEach((dato, indice) => {
           const td = document.createElement('td');
