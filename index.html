@@ -178,9 +178,11 @@ const income = jobs.reduce(
     .filter(x => x.area === 'machine')
     .reduce((s, x) => s + Number(x.amount || 0), 0);
   
-const gastosBancarios = movimientosFiltrados.reduce(
-  (s, x) => s + Number(x.debit || 0), 0
-);
+
+const gastosBancarios = movimientosFiltrados
+  .filter(x => x.classification === 'gasto_personal')
+  .reduce((s, x) => s + Number(x.debit || 0), 0);
+
 
 const personal = expenses
   .filter(x => x.area === 'personal')
