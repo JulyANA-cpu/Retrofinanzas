@@ -677,12 +677,12 @@ for (const linea of lineas) {
   movimientosDetectados++;
 }
 
-const encabezado = tabla.querySelector('thead tr');
-if (encabezado) {
-  const th = document.createElement('th');
-  th.textContent = 'Seleccionar';
-  encabezado.insertBefore(th, encabezado.firstChild);
-}
+const thSeleccion = document.createElement('th');
+thSeleccion.textContent = 'Seleccionar';
+thSeleccion.style.cssText =
+  'padding:8px;border-bottom:2px solid #ccc;text-align:left;';
+
+encabezado.insertBefore(thSeleccion, encabezado.firstChild);
 
 const resumen = document.createElement('p');
 resumen.className = 'sub';
