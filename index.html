@@ -368,7 +368,7 @@ async function cargarMovimientosBancarios() {
 
   const { data, error } = await supabaseClient
     .from('bank_transactions')
-    .select('transaction_date, description, debit, credit, balance')
+.select('transaction_date, description, debit, credit, balance, classification')
     .eq('user_id', user.id)
     .order('transaction_date', { ascending: false });
 
