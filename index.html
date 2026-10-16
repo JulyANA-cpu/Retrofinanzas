@@ -179,9 +179,10 @@ const income = jobs.reduce(
     .reduce((s, x) => s + Number(x.amount || 0), 0);
   
 
+
 const gastosBancarios = movimientosFiltrados
-  .filter(x => x.classification === 'gasto_personal')
   .reduce((s, x) => s + Number(x.debit || 0), 0);
+
 
 
 const personal = expenses
