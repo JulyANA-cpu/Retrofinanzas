@@ -42,21 +42,23 @@
   </div>
 </section>
 
-<section id="bankTransactions" class="panel">
-  <div class="sectionhead">
-    <h2>Movimientos bancarios</h2>
-  </div>
-  <div class="card">
-    <p>Consulta los movimientos importados de tus estados de cuenta.</p>
-    <div id="bankTransactionsList">
-      <p class="sub">Los movimientos aparecerán aquí.</p>
-    </div>
-  </div>
-</section>
+
 
   <div id="bankReview" style="margin-top:12px;overflow-x:auto"></div>
-  <div class="footer-note">RetroFinanzas · Prototipo funcional local · No conectado a servicios externos</div></main><nav class="nav"><button class="active" data-page="home" onclick="go('home',this)"><span>⌂</span>Inicio</button><button data-page="jobs" onclick="go('jobs',this)"><span>🚜</span>Trabajos</button><button data-page="expenses" onclick="go('expenses',this)"><span>🧾</span>Gastos</button><button data-page="personalPanel" onclick="go('personalPanel',this)"><span>👤</span>Personal</button><button data-page="maintenance" onclick="go('maintenance',this)"><span>🔧</span>Mantto.</button>`<button data-page="reports" onclick="go('reports',this)"><span>▤</span>Reportes</button><button data-page="bankTransactions" onclick="go('bankTransactions',this)"><span>🏦</span>Bancos</button></nav></div>`
-<button data-page="bankTransactions" onclick="go('bankTransactions',this)"><span>🏦</span>Bancos</button>
+ 
+<div class="footer-note">RetroFinanzas · Prototipo funcional local · No conectado a servicios externos</div>
+</main>
+<nav class="nav">
+  <button class="active" data-page="home" onclick="go('home',this)"><span>⌂</span>Inicio</button>
+  <button data-page="jobs" onclick="go('jobs',this)"><span>🚜</span>Trabajos</button>
+  <button data-page="expenses" onclick="go('expenses',this)"><span>🧾</span>Gastos</button>
+  <button data-page="personalPanel" onclick="go('personalPanel',this)"><span>👤</span>Personal</button>
+  <button data-page="maintenance" onclick="go('maintenance',this)"><span>🔧</span>Mantto.</button>
+  <button data-page="reports" onclick="go('reports',this)"><span>▤</span>Reportes</button>
+  <button data-page="bankTransactions" onclick="go('bankTransactions',this)"><span>🏦</span>Bancos</button>
+</nav>
+</div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
