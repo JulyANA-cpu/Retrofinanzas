@@ -153,13 +153,32 @@ function render() {
     x => all || x.date?.startsWith(month)
   );
 
-  const income = jobs.reduce((s, x) => s + Number(x.income || 0), 0);
+
+const movimientosFiltrados = movimientosBancarios.filter(
+  x => all || x.transaction_date?.startsWith(month)
+);
+
+const ingresosBancarios = movimientosFiltrados.reduce(
+  (s, x) => s + Number(x.credit || 0), 0
+);
+
+const income = jobs.reduce(
+  (s, x) => s + Number(x.income || 0), 0
+) + ingresosBancarios;
+
   const costs = expenses
     .filter(x => x.area === 'machine')
     .reduce((s, x) => s + Number(x.amount || 0), 0);
-  const personal = expenses
-    .filter(x => x.area === 'personal')
-    .reduce((s, x) => s + Number(x.amount || 0), 0);
+  
+const gastosBancarios = movimientosFiltrados.reduce(
+  (s, x) => s + Number(x.debit || 0), 0
+);
+
+const personal = expenses
+  .filter(x => x.area === 'personal')
+  .reduce((s, x) => s + Number(x.amount || 0), 0)
+  + gastosBancarios;
+
 
   document.getElementById('income').textContent = money(income);
   document.getElementById('costs').textContent = money(costs);
@@ -326,7 +345,7 @@ if (
   alert('Importación finalizada. Los movimientos seleccionados se procesaron.');
 }
 
-
+let movimientosBancarios = [];
 async function cargarMovimientosBancarios() {
   const lista = document.getElementById('bankTransactionsList');
   if (!lista) return;
@@ -352,7 +371,7 @@ async function cargarMovimientosBancarios() {
     lista.textContent = 'No se pudieron cargar los movimientos.';
     return;
   }
-
+movimientosBancarios = data || [];
   if (!data || data.length === 0) {
     lista.textContent = 'Todavía no hay movimientos bancarios.';
     return;
