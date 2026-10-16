@@ -164,9 +164,11 @@ const movimientosFiltrados = movimientosBancarios.filter(
   x => all || x.transaction_date?.startsWith(month)
 );
 
-const ingresosBancarios = movimientosFiltrados.reduce(
-  (s, x) => s + Number(x.credit || 0), 0
-);
+
+const ingresosBancarios = movimientosFiltrados
+  .filter(x => x.classification === 'ingreso_real')
+  .reduce((s, x) => s + Number(x.credit || 0), 0);
+
 
 const income = jobs.reduce(
   (s, x) => s + Number(x.income || 0), 0
