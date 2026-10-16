@@ -812,10 +812,11 @@ botonImportar.addEventListener('click', async () => {
       bankReview.querySelectorAll('.bank-movement-check')
     );
 
-    await guardarMovimientosBancarios(
-      movimientosSeleccionables,
-      casillas
-    );
+await guardarMovimientosBancarios(
+  movimientosSeleccionables,
+  casillas,
+  anioEstadoCuenta
+);
   } catch (error) {
     console.error('Error al importar movimientos:', error);
     alert('No se pudo completar la importación.');
