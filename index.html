@@ -800,7 +800,31 @@ botonImportar.className = 'btn';
 botonImportar.textContent = 'Importar movimientos seleccionados';
 
 botonImportar.disabled = false;
-botonImportar.title = 'Guardar los movimientos bancarios seleccionados en Supabase.';
+botonImportar.title =
+  'Guardar los movimientos bancarios seleccionados en Supabase.';
+
+botonImportar.addEventListener('click', async () => {
+  botonImportar.disabled = true;
+  botonImportar.textContent = 'Guardando...';
+
+  try {
+    const casillas = Array.from(
+      bankReview.querySelectorAll('.bank-movement-check')
+    );
+
+    await guardarMovimientosBancarios(
+      movimientosSeleccionables,
+      casillas
+    );
+  } catch (error) {
+    console.error('Error al importar movimientos:', error);
+    alert('No se pudo completar la importación.');
+  } finally {
+    botonImportar.disabled = false;
+    botonImportar.textContent = 'Importar movimientos seleccionados';
+  }
+});
+
 bankReview.appendChild(botonImportar);
 
 const contenedorTabla = document.createElement('div');
