@@ -27,7 +27,20 @@
 <section id="personalPanel" class="panel"><div class="sectionhead"><h2>Finanzas personales</h2></div><div class="card"><p class="sub">Registra gastos e ingresos personales en la sección Gastos usando el área Personal. Las transferencias a la operación deben tratarse como aportes o retiros, no como ingreso o gasto duplicado.</p><button class="btn" onclick="go('expenses')">＋ Registrar movimiento</button></div><div class="sectionhead" style="margin-top:20px"><h2>Movimientos personales</h2></div><div id="personalList" class="list"></div></section>
 <section id="maintenance" class="panel"><div class="sectionhead"><h2>Mantenimiento</h2></div><div class="card"><form id="maintForm"><label>Trabajo realizado *</label><input name="description" required placeholder="Cambio de aceite, filtros..."><label>Horómetro actual</label><input name="meter" type="number" min="0" step="0.1"><label>Costo USD</label><input name="amount" type="number" min="0" step="0.01"><label>Fecha *</label><input name="date" type="date" required><label>Próximo mantenimiento a horómetro</label><input name="next" type="number" min="0" step="0.1"><button class="btn" type="submit">Guardar mantenimiento</button></form></div><div class="sectionhead" style="margin-top:20px"><h2>Historial</h2><button class="btn secondary" onclick="exportCSV('maintenance')">Exportar CSV</button></div><div id="maintList" class="list"></div></section>
 <section id="reports" class="panel"><div class="sectionhead"><h2>Reportes y respaldo</h2></div><div class="card"><p>Descarga tus registros en CSV para abrirlos en Excel. Haz copias periódicas: los datos están solo en este navegador.</p><div class="actions"><button class="btn" onclick="exportCSV('expenses')">Exportar gastos</button><button class="btn secondary" onclick="exportCSV('jobs')">Exportar trabajos</button></div><button class="btn secondary" style="width:100%;margin-top:9px" onclick="exportCSV('maintenance')">Exportar mantenimiento</button><label style="margin-top:18px">Importar movimientos bancarios (CSV)</label><input type="file" id="bankFile" accept=".pdf,application/pdf,.csv,text/csv"><p class="sub">Revisa los movimientos del PDF antes de importarlos. Los débitos y créditos se guardarán por separado y no se registrarán automáticamente como gastos o ingresos.</p><div id="bankStatus" class="sub"></div><label>Respaldo de datos (JSON)</label><button class="btn dark" style="width:100%" onclick="backup()">Descargar respaldo completo</button><label>Restaurar respaldo JSON</label><input type="file" id="restoreFile" accept="application/json"><div id="restoreStatus" class="sub"></div><div class="notice" style="margin-top:16px">Antes de conectar el correo, la versión de producción debe implementar inicio de sesión Microsoft, permisos mínimos, servidor y base de datos protegida. No introduzcas contraseñas aquí.</div></div></section>
-<div id="bankReview" style="margin-top:12px;overflow-x:auto"></div>
+```html
+<section id="bankTransactions" class="panel">
+  <div class="sectionhead">
+    <h2>Movimientos bancarios</h2>
+  </div>
+  <div class="card">
+    <p>Consulta los movimientos importados de tus estados de cuenta.</p>
+    <div id="bankTransactionsList">
+      <p class="sub">Los movimientos aparecerán aquí.</p>
+    </div>
+  </div>
+</section>
+
+  <div id="bankReview" style="margin-top:12px;overflow-x:auto"></div>
   <div class="footer-note">RetroFinanzas · Prototipo funcional local · No conectado a servicios externos</div></main><nav class="nav"><button class="active" data-page="home" onclick="go('home',this)"><span>⌂</span>Inicio</button><button data-page="jobs" onclick="go('jobs',this)"><span>🚜</span>Trabajos</button><button data-page="expenses" onclick="go('expenses',this)"><span>🧾</span>Gastos</button><button data-page="personalPanel" onclick="go('personalPanel',this)"><span>👤</span>Personal</button><button data-page="maintenance" onclick="go('maintenance',this)"><span>🔧</span>Mantto.</button><button data-page="reports" onclick="go('reports',this)"><span>▤</span>Reportes</button></nav></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
