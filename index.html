@@ -388,7 +388,9 @@ movimientosBancarios = data || [];
 
   const encabezado = document.createElement('tr');
 
-  ['Fecha', 'Descripción', 'Débito', 'Crédito', 'Saldo'].forEach(titulo => {
+  
+['Fecha', 'Descripción', 'Débito', 'Crédito', 'Saldo', 'Clasificación'].forEach(titulo => {
+
     const th = document.createElement('th');
     th.textContent = titulo;
     th.style.cssText = 'padding:8px;border-bottom:2px solid #ccc;text-align:left;';
@@ -397,25 +399,78 @@ movimientosBancarios = data || [];
 
   tabla.appendChild(encabezado);
 
-  data.forEach(movimiento => {
-    const fila = document.createElement('tr');
 
-    [
-      movimiento.transaction_date,
-      movimiento.description,
-      Number(movimiento.debit || 0).toFixed(2),
-      Number(movimiento.credit || 0).toFixed(2),
-      movimiento.balance == null ? '' : Number(movimiento.balance).toFixed(2)
-    ].forEach((valor, indice) => {
-      const td = document.createElement('td');
-      td.textContent = valor;
-      td.style.cssText = 'padding:8px;border-bottom:1px solid #ddd;';
-      if (indice >= 2) td.style.textAlign = 'right';
-      fila.appendChild(td);
-    });
+data.forEach(movimiento => {
+  const fila = document.createElement('tr');
 
-    tabla.appendChild(fila);
+  [
+    movimiento.transaction_date,
+    movimiento.description,
+    Number(movimiento.debit || 0).toFixed(2),
+    Number(movimiento.credit || 0).toFixed(2),
+    movimiento.balance == null
+      ? ''
+      : Number(movimiento.balance).toFixed(2)
+  ].forEach((valor, indice) => {
+    const td = document.createElement('td');
+    td.textContent = valor;
+    td.style.cssText =
+      'padding:8px;border-bottom:1px solid #ddd;';
+    if (indice >= 2) td.style.textAlign = 'right';
+    fila.appendChild(td);
   });
+
+  const celdaClasificacion = document.createElement('td');
+  celdaClasificacion.style.cssText =
+    'padding:8px;border-bottom:1px solid #ddd;';
+
+  const selector = document.createElement('select');
+  selector.style.cssText = 'min-width:170px;padding:6px;';
+
+  const opciones = [
+    ['pendiente', 'Pendiente'],
+    ['gasto_personal', 'Gasto personal'],
+    ['ingreso_real', 'Ingreso real'],
+    ['transferencia_propia', 'Transferencia propia'],
+    ['prestamo_recibido', 'Préstamo recibido'],
+    ['pago_prestamo', 'Pago de préstamo']
+  ];
+
+  opciones.forEach(([valor, texto]) => {
+    const opcion = document.createElement('option');
+    opcion.value = valor;
+    opcion.textContent = texto;
+    selector.appendChild(opcion);
+  });
+
+  selector.value = movimiento.classification || 'pendiente';
+
+  selector.addEventListener('change', async () => {
+    selector.disabled = true;
+
+    const { error } = await supabaseClient
+      .from('bank_transactions')
+      .update({ classification: selector.value })
+      .eq('user_id', user.id)
+      .eq('fingerprint', movimiento.fingerprint);
+
+    if (error) {
+      console.error('Error al clasificar movimiento:', error);
+      alert('No se pudo guardar la clasificación. Inténtalo de nuevo.');
+      selector.value = movimiento.classification || 'pendiente';
+    } else {
+      movimiento.classification = selector.value;
+      alert('Clasificación guardada.');
+    }
+
+    selector.disabled = false;
+  });
+
+  celdaClasificacion.appendChild(selector);
+  fila.appendChild(celdaClasificacion);
+  tabla.appendChild(fila);
+});
+
 
   lista.replaceChildren();
 
