@@ -111,6 +111,7 @@ supabaseClient.auth.onAuthStateChange((_event, session) => {   mostrarAcceso(ses
     cargarGastosSupabase();
     cargarTrabajosSupabase();
     cargarMantenimientosSupabase();
+    cargarMovimientosBancarios();
   }
 });
  
@@ -310,7 +311,28 @@ if (
 
   alert('Importación finalizada. Los movimientos seleccionados se procesaron.');
 }
+```javascript
+async function cargarMovimientosBancarios() {
+  const { data: { user }, error: userError } =
+    await supabaseClient.auth.getUser();
 
+  if (userError || !user) return;
+
+  const { data, error } = await supabaseClient
+    .from('bank_transactions')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('transaction_date', { ascending: false });
+
+  if (error) {
+    console.error('Error al cargar movimientos bancarios:', error);
+    return;
+  }
+
+  console.log('Movimientos bancarios cargados:', data);
+}
+```
+  
 async function cargarGastosSupabase() {
   const { data: { user }, error: userError } =
     await supabaseClient.auth.getUser();
