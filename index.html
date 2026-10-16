@@ -132,7 +132,9 @@ supabaseClient.auth.getSession().then(({ data, error }) => {
   if (!error) mostrarAcceso(data.session);
 });
 
-const KEY='retrofinanzas_v1';let db=load();function load(){try{return JSON.parse(localStorage.getItem(KEY))||{expenses:[],jobs:[],maintenance:[]}}catch(e){return {expenses:[],jobs:[],maintenance:[]}}}function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}function money(n){return new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD'}).format(Number(n)||0)}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function go(id,btn){document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo({top:0,behavior:'smooth'});render()}function dateToday(){return new Date().toISOString().slice(0,10)}document.querySelectorAll('input[type=date]').forEach(x=>x.value=dateToday());
+const KEY='retrofinanzas_v1';let db=load();function load(){try{return JSON.parse(localStorage.getItem(KEY))||{expenses:[],jobs:[],maintenance:[]}}catch(e){return {expenses:[],jobs:[],maintenance:[]}}}function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}function money(n){return new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD'}).format(Number(n)||0)}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function go(id,btn){document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo({top:0,behavior:'smooth'});render();if(id==='bankTransactions'){cargarMovimientosBancarios();}}
+
 
 supabaseClient.auth.onAuthStateChange((_event, session) => {   mostrarAcceso(session);
   if (session) {
