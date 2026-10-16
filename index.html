@@ -401,43 +401,22 @@ movimientosBancarios = data || [];
   
 
 const clasificarAutomaticamente = movimiento => {
-  const descripcion = (movimiento.description || '')
-    .toUpperCase()
-    .replace(/\s+/g, ' ')
-    .trim();
-
   const debito = Number(movimiento.debit || 0);
   const credito = Number(movimiento.credit || 0);
 
+  // Si tiene débito y crédito al mismo tiempo, revisar manualmente.
   if (debito > 0 && credito > 0) return 'pendiente';
 
-  // Los créditos requieren revisión para no confundir
-  // transferencias o préstamos con ingresos reales.
-  if (credito > 0) {
-    if (/TRANSFERENCIA INTERNET|TRANSFERENCIA INTERBANCARIA/.test(descripcion)) {
-      return 'transferencia_propia';
-    }
-    return 'pendiente';
-  }
+  // Todo crédito se clasifica como ingreso real.
+  if (credito > 0) return 'ingreso_real';
 
-  // Comisiones y consumos con tarjeta: gastos.
-  if (/CONSUMO VISA|CONSUMO TD|COMISION PAGO TARJETA INTERBANCARIA|CNSM GAS|RETIRO ATM BP/.test(descripcion)) {
-    return debito > 0 ? 'gasto_personal' : 'pendiente';
-  }
+  // Todo débito se clasifica como gasto personal.
+  if (debito > 0) return 'gasto_personal';
 
-  // Transferencias y pagos de tarjeta: revisar antes de clasificar.
-  if (/TRANSFERENCIA INTERNET|TRANSFERENCIA INTERBANCARIA|PAGO TARJETA|17083377-VISA BP/.test(descripcion)) {
-    return 'pendiente';
-  }
-
+  // Si no tiene débito ni crédito, queda pendiente.
   return 'pendiente';
 };
 
-
-console.log(
-  'Prueba CONSUMO VISA NA:',
-  clasificarAutomaticamente({ description: 'CONSUMO VISA NA', debit: 10, credit: 0 })
-);
 
   const pendientesParaActualizar = movimientosBancarios.filter(
     movimiento =>
