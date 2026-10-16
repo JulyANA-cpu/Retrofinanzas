@@ -196,7 +196,7 @@ function render() {
 }
 
 
-async function guardarMovimientosBancarios(movimientos, casillas) {
+async function guardarMovimientosBancarios(movimientos, casillas, anioEstadoCuenta) {
   const { data: { user }, error: userError } =
     await supabaseClient.auth.getUser();
 
