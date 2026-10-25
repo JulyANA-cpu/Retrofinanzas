@@ -730,6 +730,11 @@ async function cargarEstadosDeCuenta() {
 }
 
 async function eliminarEstadoDeCuenta(estadoId, nombreArchivo) {
+  console.log('Diagnóstico eliminación:', {
+    estadoId,
+    nombreArchivo
+  });
+
   const confirmar = confirm(
     '¿Deseas eliminar el estado de cuenta "' + nombreArchivo + '"?\n\n' +
     'Se eliminarán sus vínculos y los movimientos que no pertenezcan ' +
