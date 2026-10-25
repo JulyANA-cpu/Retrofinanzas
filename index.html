@@ -78,7 +78,15 @@ const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_KEY
 );
+function dateToday() {
+  const hoy = new Date();
+  const anio = hoy.getFullYear();
+  const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+  const dia = String(hoy.getDate()).padStart(2, '0');
 
+  return `${anio}-${mes}-${dia}`;
+}
+  
 function mostrarAcceso(session) {
   document.querySelectorAll('.panel').forEach(panel => {
     panel.classList.toggle(
