@@ -743,8 +743,15 @@ async function eliminarEstadoDeCuenta(estadoId, nombreArchivo) {
 
   if (!confirmar) return;
 
+
   const { data: { user }, error: errorUsuario } =
     await supabaseClient.auth.getUser();
+
+  console.log('Diagnóstico usuario:', {
+    usuarioId: user?.id,
+    errorUsuario: errorUsuario?.message,
+    estadoId
+  });
 
   if (errorUsuario || !user) {
     alert('Debes iniciar sesión para eliminar un estado de cuenta.');
