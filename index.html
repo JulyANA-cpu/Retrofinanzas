@@ -764,13 +764,21 @@ async function eliminarEstadoDeCuenta(estadoId, nombreArchivo) {
   );
 
   if (error) {
-    console.error('Error al eliminar estado de cuenta:', error);
-    alert(
-      'No se pudo eliminar el estado de cuenta. ' +
-      'Revisa el error antes de volver a intentarlo.'
-    );
-    return;
-  }
+  console.error('Error al eliminar estado de cuenta:', {
+    code: error.code,
+    message: error.message,
+    details: error.details,
+    hint: error.hint
+  });
+
+  alert(
+    'No se pudo eliminar el estado de cuenta.\n\n' +
+    'Código: ' + (error.code || 'No disponible') + '\n' +
+    'Detalle: ' + (error.message || 'Error desconocido')
+  );
+
+  return;
+}
 
   alert('Estado de cuenta eliminado correctamente.');
 
