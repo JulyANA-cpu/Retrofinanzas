@@ -741,22 +741,21 @@ async function eliminarEstadoDeCuenta(estadoId, nombreArchivo) {
     'a otro estado de cuenta.\n\nEsta acción no se puede deshacer.'
   );
 
-  if (!confirmar) return;
+if (!confirmar) return;
 
+const { data: { user }, error: errorUsuario } =
+  await supabaseClient.auth.getUser();
 
-  const { data: { user }, error: errorUsuario } =
-    await supabaseClient.auth.getUser();
+console.log('Diagnóstico usuario:', {
+  usuarioId: user?.id,
+  errorUsuario: errorUsuario?.message,
+  estadoId
+});
 
-  console.log('Diagnóstico usuario:', {
-    usuarioId: user?.id,
-    errorUsuario: errorUsuario?.message,
-    estadoId
-  });
-
-  if (errorUsuario || !user) {
-    alert('Debes iniciar sesión para eliminar un estado de cuenta.');
-    return;
-  }
+if (errorUsuario || !user) {
+  alert('Debes iniciar sesión para eliminar un estado de cuenta.');
+  return;
+}
 
   const { error } = await supabaseClient.rpc(
     'eliminar_estado_cuenta',
